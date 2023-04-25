@@ -4,15 +4,46 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 // The `/api/products` endpoint
 
 // get all products
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   // find all products
   // be sure to include its associated Category and Tag data
+  try {
+    // find all products
+    const products = await Product.findAll({
+      include: [{ model: Category }, { model: Tag }],
+    });
+
+    // send the products as a response
+    res.status(200).json(products);
+  } catch (err) {
+    // handle any errors
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // get one product
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   // find a single product by its `id`
   // be sure to include its associated Category and Tag data
+  try {
+    // find a single product by its id
+    const product = await Product.findByPk(req.params.id, {
+      include: [{ model: Category }, { model: Tag }],
+    });
+
+    if (!product) {
+      // if product with specified id is not found, return 404 error
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // send the product as a response
+    res.status(200).json(product);
+  } catch (err) {
+    // handle any errors
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // create new product
@@ -89,8 +120,26 @@ router.put('/:id', (req, res) => {
     });
 });
 
-router.delete('/:id', (req, res) => {
-  // delete one product by its `id` value
+router.delete('/:id', async (req, res) => {
+  try {
+    // find the product with the specified id
+    const product = await Product.findByPk(req.params.id);
+
+    if (!product) {
+      // if product with specified id is not found, return 404 error
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // delete the product
+    await product.destroy();
+
+    // send a success message
+    res.status(200).json({ message: 'Product deleted successfully' });
+  } catch (err) {
+    // handle any errors
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 module.exports = router;
